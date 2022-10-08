@@ -1,6 +1,7 @@
+use std::io::{BufRead, BufReader};
 use std::{error::Error, ffi::OsString, fmt, path::PathBuf, time::Duration};
 
-use subprocess::{Popen, PopenConfig, Redirection};
+use std::process;
 
 #[derive(Debug, Clone)]
 pub struct OsNotSupportedError;
@@ -18,57 +19,55 @@ impl Ppocr {
     pub fn new(exe_path: PathBuf) -> Result<Ppocr, Box<dyn Error>> {
         std::env::set_var("RUST_BACKTRACE", "full");
         if cfg!(target_os = "windows") {
-            println!("{:?}", std::env::current_dir()?);
-            let wd = OsString::from(exe_path.parent().unwrap());
-            println!("{:?}", wd);
-            std::env::set_current_dir(&wd).unwrap();
-            println!("{:?}", std::env::current_dir()?);
-            let mut p = Popen::create(
-                // &["python3", "hello.py"],
-                &[
-                    exe_path.to_str().unwrap(),
-                    "--det_model_dir=ch_PP-OCRv3_det_infer",
-                    "--cls_model_dir=ch_ppocr_mobile_v2.0_cls_infer",
-                    "--rec_model_dir=ch_PP-OCRv3_rec_infer",
-                    " --rec_char_dict_path=ppocr_keys_v1.txt",
-                ],
-                PopenConfig {
-                    stdin: Redirection::Pipe,
-                    stdout: Redirection::Pipe,
-                    // stderr: Redirection::Pipe,
-                    // executable: Some(OsString::from(format!("{}{}", exe_path.to_str().unwrap(), "")),),
-                    detached: true,
-                    ..Default::default()
-                },
-            )?;
-            let mut counter = 0;
-            loop {
-                if let Some(exit_status) = p.poll() {
-                    println!("exit_status: {:?}", exit_status);
+        } else {
+            return Err(Box::new(OsNotSupportedError {}));
+        }
+
+        println!("{:?}", std::env::current_dir()?);
+        let wd = OsString::from(exe_path.parent().unwrap());
+        std::env::set_current_dir(&wd).unwrap();
+        let mut sp = process::Command::new("python3")
+            .args(&[
+                "-c",
+                r#"from time import sleep
+sleep(0.01)
+print("a", end="_")
+sleep(0.2)
+print("b")
+print('{some: "json!"}')
+sleep(1)
+print("process ended!!!")"#,
+            ])
+            .stdout(process::Stdio::piped())
+            .stderr(process::Stdio::piped())
+            .spawn()?;
+        /* exe_path.to_str().unwrap(),
+        "--det_model_dir=ch_PP-OCRv3_det_infer",
+        "--cls_model_dir=ch_ppocr_mobile_v2.0_cls_infer",
+        "--rec_model_dir=ch_PP-OCRv3_rec_infer",
+        " --rec_char_dict_path=ppocr_keys_v1.txt", */
+        let mut sstdout = BufReader::new(sp.stdout.as_mut().unwrap());
+        // let mut sstderr = BufReader::new(sp.stderr.as_mut().unwrap());
+        let mut buff = String::new();
+        for _i in 1..50 {
+            match sstdout.read_line(&mut buff) {
+                Ok(siz) => {
+                    println!("Read size {}: {}", siz, buff);
+                    buff.clear();
+                }
+                Err(e) => {
+                    println!("读取 stdout 发生错误：{:?}", e);
                     break;
                 }
-                let mut comm = p
-                    .communicate_start(Some(
-                        "C:\\Users\\Neko\\Pictures\\boosi.png".as_bytes().to_vec(),
-                    ))
-                    .limit_time(Duration::from_secs(3));
-                let (out, err) = comm.read().unwrap();
-                let out = format!("{:?}", &out.unwrap());
-                println!("{}", out);
             }
-
-            Ok(Ppocr { exe_path })
-        } else {
-            Err(Box::new(OsNotSupportedError))
         }
+        Ok(Ppocr { exe_path })
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
-
-    use crate::Ppocr;
     #[test]
     fn it_works() {
         let api = Ppocr::new(PathBuf::from(
