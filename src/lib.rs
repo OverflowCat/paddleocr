@@ -24,7 +24,6 @@ impl Ppocr {
             return Err(Box::new(OsNotSupportedError {}));
         }
 
-        println!("{:?}", std::env::current_dir()?);
         let wd = OsString::from(exe_path.parent().unwrap());
         std::env::set_current_dir(&wd).unwrap();
         let process = process::Command::new(&exe_path)
