@@ -1,9 +1,17 @@
 [package]
 name = "paddleocr"
-version = "0.1.0"
+version = "0.2.1"
 edition = "2021"
+license = "MIT"
+description = "A naïve Rust wrapper for PaddleOCR-JSON."
+homepage = "https://github.com/OverflowCat/paddleocr"
+repository = "https://github.com/OverflowCat/paddleocr"
+readme = "README.adoc"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 subprocess = "0.2.9"
+
+[lib]
+doctest = false
