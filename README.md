@@ -1,15 +1,13 @@
-= Crate `paddleocr`
+# Crate `paddleocr`
 
-A simple wrapper for https://github.com/hiroi-sora/PaddleOCR-json[`hiroi-sora/PaddleOCR-json`].
+A simple wrapper for [`hiroi-sora/PaddleOCR-json`](https://github.com/hiroi-sora/PaddleOCR-json).
 
-== Usage
+## Usage
 
-[source,rust]
-----
+```rust
 let mut p = paddleocr::Ppocr::new(std::path::PathBuf::from(
     ".../PaddleOCR_json.exe", // path to binary
-))
-.unwrap(); // initialize
+)).unwrap(); // initialize
 
 let now = std::time::Instant::now(); // benchmark
 {
@@ -22,4 +20,4 @@ let now = std::time::Instant::now(); // benchmark
     println!("{}", p.ocr_clipboard().unwrap());
 }
 println!("Elapsed: {:.2?}", now.elapsed());
-----
+```
