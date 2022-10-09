@@ -20,8 +20,7 @@ pub struct Ppocr {
 impl Ppocr {
     pub fn new(exe_path: PathBuf) -> Result<Ppocr, Box<dyn Error>> {
         std::env::set_var("RUST_BACKTRACE", "full");
-        if cfg!(target_os = "windows") {
-        } else {
+        if !cfg!(target_os = "windows") {
             return Err(Box::new(OsNotSupportedError {}));
         }
 
@@ -42,18 +41,21 @@ impl Ppocr {
 
         let mut p = Ppocr { exe_path, process };
 
-        // initializing
-        for _i in 1..5 {
+        for _i in 1..20 {
+            let mut stdout = BufReader::new(p.process.stdout.as_mut().unwrap());
             match p.read_line() {
                 Ok(line) => {
-                    println!("《{}》", line);
-                    if line.starts_with("OCR init completed.") {
-                        println!("OCR 初始化成功！");
+                    if line.contains("OCR init completed.")
+                        || line.contains("Image path dose not exist")
+                    {
+                        // initialization successful
                         break;
+                    } else if line.contains("PaddleOCR-json v1.2.1") {
+                        // in v1.2.1 the last line cannot be read by read_line
+                        p.write_fmt(format_args!("\n")).err();
                     }
                 }
                 Err(e) => {
-                    // println!("读取 stdout 发生错误：{:?}", e);
                     return Err(Box::new(e));
                 }
             }
@@ -66,7 +68,7 @@ impl Ppocr {
         let mut buff = String::new();
         let mut stdout = BufReader::new(self.process.stdout.as_mut().unwrap());
         match stdout.read_line(&mut buff) {
-            Ok(_size) => Ok(buff),
+            Ok(_siz) => Ok(buff),
             Err(e) => Err(e),
         }
     }
@@ -77,19 +79,18 @@ impl Ppocr {
         stdin.write_fmt(fmt)
     }
 
-    pub fn ocr(&mut self, image_path: &PathBuf) -> IoResult<String> {
-        self.write_fmt(format_args!("{}\n", &image_path.to_string_lossy()))?;
+    pub fn ocr<S: AsRef<str> + std::fmt::Display>(&mut self, image_path: S) -> IoResult<String> {
+        self.write_fmt(format_args!("{}\n", &image_path))?;
         self.read_line()
+    }
+
+    pub fn ocr_clipboard(&mut self) -> IoResult<String> {
+        self.ocr("clipboard")
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Ppocr;
-    use std::path::PathBuf;
-    #[test]
-    fn it_works() {
-        let api = Ppocr::new(PathBuf::from("PaddleOCR-json\\PaddleOCR_json.exe"));
-        api.unwrap();
+impl Drop for Ppocr {
+    fn drop(&mut self) {
+        self.process.kill().err();
     }
 }
