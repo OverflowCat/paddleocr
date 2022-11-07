@@ -1,13 +1,13 @@
 [package]
 name = "paddleocr"
-version = "0.2.2"
+version = "0.2.3-alpha"
 edition = "2021"
 license = "MIT"
 description = "A naïve Rust wrapper for PaddleOCR-JSON."
 homepage = "https://github.com/OverflowCat/paddleocr"
 repository = "https://github.com/OverflowCat/paddleocr"
 readme = "README.md"
-categories = ["paddle", "ocr", "wrapper"]
+categories = ["computer-vision", "external-ffi-bindings"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

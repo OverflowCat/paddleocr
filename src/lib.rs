@@ -1,7 +1,7 @@
 use std::io::Result as IoResult;
 use std::io::{BufRead, BufReader, Write};
 use std::process;
-use std::{error::Error, ffi::OsString, fmt, path::PathBuf};
+use std::{error::Error, fmt, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub struct OsNotSupportedError;
@@ -13,6 +13,7 @@ impl fmt::Display for OsNotSupportedError {
 impl Error for OsNotSupportedError {}
 
 pub struct Ppocr {
+    #[allow(dead_code)]
     exe_path: PathBuf,
     process: process::Child,
 }
@@ -24,9 +25,13 @@ impl Ppocr {
             return Err(Box::new(OsNotSupportedError {}));
         }
 
-        let wd = OsString::from(exe_path.parent().unwrap());
-        std::env::set_current_dir(&wd).unwrap();
+        let wd = exe_path
+            .canonicalize()?
+            .parent()
+            .ok_or_else(|| "No parent directory found")?
+            .to_path_buf();
         let process = process::Command::new(&exe_path)
+            .current_dir(wd)
             .args(&[
                 "--det_model_dir=ch_PP-OCRv3_det_infer",
                 "--cls_model_dir=ch_ppocr_mobile_v2.0_cls_infer",
