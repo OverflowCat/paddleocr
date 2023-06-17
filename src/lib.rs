@@ -12,6 +12,41 @@ impl fmt::Display for OsNotSupportedError {
 }
 impl Error for OsNotSupportedError {}
 
+#[cfg(feature = "parse")]
+use serde::Deserialize;
+
+#[cfg(feature = "parse")]
+type Point = [usize; 2];
+
+#[cfg(feature = "parse")]
+#[derive(Deserialize, Debug, Clone)]
+pub struct OcrRec {
+    pub code: u32,
+    pub data: Vec<ContentData>,
+}
+// pub enum OcrRec {
+//     Content { code: u32, data: Vec<ContentData> },
+//     Message { code: u32, data: String },
+// }
+
+#[cfg(feature = "parse")]
+#[derive(Deserialize, Debug, Clone)]
+pub struct ContentData {
+    #[serde(rename(deserialize = "box"))]
+    pub rect: Rectangle,
+    pub score: f64,
+    pub text: String,
+}
+
+#[cfg(feature = "parse")]
+pub type Rectangle = [Point; 4];
+// pub struct Rectangle {
+//     topleft: Point,
+//     topright: Point,
+//     bottomright: Point,
+//     bottomleft: Point,
+// }
+
 pub struct Ppocr {
     #[allow(dead_code)]
     exe_path: PathBuf,
@@ -19,6 +54,15 @@ pub struct Ppocr {
 }
 
 impl Ppocr {
+    /**
+        Initialize a new instance.
+
+        # Examples
+
+        ```no_run
+        let mut p = paddleocr::Ppocr::new(std::path::PathBuf::from(".../PaddleOCR_json.exe",));
+        ```
+    */
     pub fn new(exe_path: PathBuf) -> Result<Ppocr, Box<dyn Error>> {
         std::env::set_var("RUST_BACKTRACE", "full");
         if !cfg!(target_os = "windows") {
@@ -245,6 +289,21 @@ impl Ppocr {
     pub fn ocr_clipboard(&mut self) -> IoResult<String> {
         self.ocr("clipboard")
     }
+
+    #[cfg(feature = "parse")]
+    pub fn ocr_and_parse<S: AsRef<str> + std::fmt::Display>(
+        &mut self,
+        image_path: S,
+    ) -> Result<Vec<ContentData>, String> {
+        let ocr_result = self.ocr(image_path);
+        let Ok(ocr_string) = ocr_result.as_ref() else {
+            return Err("OCR failed".to_string());
+        };
+        match serde_json::from_str::<OcrRec>(&ocr_string) {
+            Ok(x) => Ok(x.data),
+            Err(e) => Err(format!("JSON parse failed: {}", e)),
+        }
+    }
 }
 
 impl Drop for Ppocr {
@@ -258,7 +317,7 @@ impl Drop for Ppocr {
 mod tests {
     use crate::Ppocr;
     #[test]
-    fn test() {
+    fn recognize() {
         let mut p = Ppocr::new(std::path::PathBuf::from(
             "E:/code/paddleocr/pojnew/PaddleOCR_json.exe", // path to binary
         ))
@@ -277,5 +336,16 @@ mod tests {
             println!("{}", p.ocr_clipboard().unwrap());
         }
         println!("Elapsed: {:.2?}", now.elapsed());
+    }
+
+    #[test]
+    fn parse() {
+        let mut p = Ppocr::new(std::path::PathBuf::from(
+            "E:/code/paddleocr/pojnew/PaddleOCR_json.exe", // path to binary
+        ))
+        .unwrap(); // initialize
+
+        // OCR files
+        p.ocr_and_parse("C:/Users/Neko/Pictures/test1.png").unwrap();
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "paddleocr"
-version = "0.2.3"
+version = "0.3.0"
 edition = "2021"
 license = "MIT"
 description = "A naïve Rust wrapper for PaddleOCR-JSON."
@@ -12,7 +12,14 @@ categories = ["computer-vision", "external-ffi-bindings"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+serde = { version = "1.0", optional = true, features = ["derive"] }
+serde_json = { version = "1.0", optional = true }
 
 [lib]
 doctest = false
 
+[features]
+parse = ["dep:serde", "dep:serde_json"]
+
+[dev-dependencies]
+paddleocr = { path = ".", features = ["parse"] }
