@@ -20,14 +20,11 @@ type Point = [usize; 2];
 
 #[cfg(feature = "parse")]
 #[derive(Deserialize, Debug, Clone)]
-pub struct OcrRec {
-    pub code: u32,
-    pub data: Vec<ContentData>,
+#[serde(untagged)]
+pub enum OcrRec {
+    Content { code: u32, data: Vec<ContentData> },
+    Message { code: u32, data: String },
 }
-// pub enum OcrRec {
-//     Content { code: u32, data: Vec<ContentData> },
-//     Message { code: u32, data: String },
-// }
 
 #[cfg(feature = "parse")]
 #[derive(Deserialize, Debug, Clone)]
@@ -300,7 +297,8 @@ impl Ppocr {
             return Err("OCR failed".to_string());
         };
         match serde_json::from_str::<OcrRec>(&ocr_string) {
-            Ok(x) => Ok(x.data),
+            Ok(OcrRec::Content { data, .. }) => Ok(data),
+            Ok(OcrRec::Message { code, data }) => Err(format!("{}: {}", code, data)),
             Err(e) => Err(format!("JSON parse failed: {}", e)),
         }
     }
