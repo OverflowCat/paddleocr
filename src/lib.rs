@@ -177,11 +177,8 @@ impl Ppocr {
         let mut p = paddleocr::Ppocr::new(std::path::PathBuf::from(
             ".../PaddleOCR-json.exe",
         ));
-        println!("{}", p.ocr(".../test1.png"));
-        println!("{}", p.ocr(".../test2.png"));
-        println!("{}", p.ocr(".../test3.png"));
+        println!("{}", p.ocr(Path::new(".../test.png").into()));
         ```
-
     # Results
 
     ## Return values
