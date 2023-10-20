@@ -37,6 +37,9 @@ pub struct ContentData {
 
 pub type Rectangle = [Point; 4];
 
+/**
+ * The image to be recognized.
+ */
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum ImageData {
@@ -45,6 +48,9 @@ pub enum ImageData {
 }
 
 impl ImageData {
+    /**
+     * Create an `ImageData` from a file path.
+     */
     pub fn from_path<S>(path: S) -> ImageData
     where
         S: AsRef<str> + std::fmt::Display,
@@ -53,11 +59,18 @@ impl ImageData {
             image_path: path.to_string(),
         }
     }
+    /**
+     * Create an `ImageData` from a base64 string.
+     */
     pub fn from_base64(base64: String) -> ImageData {
         ImageData::ImageBase64Dict {
             image_base64: base64,
         }
     }
+    /**
+     * Create an `ImageData` from a byte slice.
+     * Requires the `bytes` feature.
+     */
     #[cfg(feature = "bytes")]
     pub fn from_bytes<T>(bytes: T) -> ImageData
     where
@@ -82,6 +95,9 @@ impl From<PathBuf> for ImageData {
     }
 }
 
+/**
+ * A paddleocr-json instance.
+ */
 pub struct Ppocr {
     #[allow(dead_code)]
     exe_path: PathBuf,
@@ -343,6 +359,9 @@ impl Ppocr {
 }
 
 impl Drop for Ppocr {
+    /**
+     * Kill the process when the instance is dropped.
+     */
     fn drop(&mut self) {
         self.process.kill().err();
     }
