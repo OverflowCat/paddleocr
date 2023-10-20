@@ -90,13 +90,17 @@ pub struct Ppocr {
 
 impl Ppocr {
     /**
-        Initialize a new instance.
+    Initialize a new instance.
 
-        # Examples
+    # Examples
 
-        ```no_run
-        let mut p = paddleocr::Ppocr::new(std::path::PathBuf::from(".../PaddleOCR-json.exe",));
-        ```
+    ```no_run
+    let mut p = paddleocr::Ppocr::new(
+        PathBuf::from(".../PaddleOCR-json.exe"), // path to binary
+        Default::default(), // language config_path, default `zh_CN`
+    )
+    .unwrap(); // initialize
+    ```
     */
     pub fn new(exe_path: PathBuf, config_path: Option<PathBuf>) -> Result<Ppocr, Box<dyn Error>> {
         std::env::set_var("RUST_BACKTRACE", "full");
@@ -169,16 +173,18 @@ impl Ppocr {
     }
 
     /**
-        OCRs the image at the given path. Note that the returned JSON is not parsed or checked, and a valid JSON does not necessarily mean it is successful.
+    OCRs the image at the given path. Note that the returned JSON is not parsed or checked, and a valid JSON does not necessarily mean it is successful.
 
-        # Examples
+    # Examples
 
-        ```no_run
-        let mut p = paddleocr::Ppocr::new(std::path::PathBuf::from(
-            ".../PaddleOCR-json.exe",
-        ));
-        println!("{}", p.ocr(Path::new(".../test.png").into()));
-        ```
+    ```no_run
+    let mut p = paddleocr::Ppocr::new(
+        PathBuf::from(".../PaddleOCR-json.exe"), // path to binary
+        Default::default(), // language config_path, default `zh_CN`
+    )
+    .unwrap(); // initialize
+    println!("{}", p.ocr(Path::new(".../test.png").into()));
+    ```
     # Results
 
     ## Return values
@@ -310,7 +316,11 @@ impl Ppocr {
     # Examples
 
     ```no_run
-    let mut p = paddleocr::Ppocr::new(std::path::PathBuf::from(".../PaddleOCR-json.exe",));
+    let mut p = paddleocr::Ppocr::new(
+        PathBuf::from(".../PaddleOCR-json.exe"), // path to binary
+        Default::default(), // language config_path, default `zh_CN`
+    )
+    .unwrap(); // initialize
     println!("{}", p.ocr_clipboard());
     ```
     */
